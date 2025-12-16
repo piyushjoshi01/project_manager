@@ -1,5 +1,8 @@
 package com.work.ProjectManager.config;
 
+import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -8,15 +11,74 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class JiraClientConfig {
 
+    private String jiraBaseUrl;
+    private String jiraEmail;
+    private String jiraApiToken;
+
+    @Value("${jira.base-url:https://piyushjoshi280601.atlassian.net/}")
+    private String baseUrlProperty;
+
+    @Value("${JIRA_EMAIL:}")
+    private String emailProperty;
+
+    @Value("${JIRA_API_TOKEN:}")
+    private String tokenProperty;
+
+    @PostConstruct
+    public void loadEnvFile() {
+        // Load .env file if it exists
+        Dotenv dotenv = null;
+        try {
+            dotenv = Dotenv.configure()
+                    .ignoreIfMissing()
+                    .load();
+        } catch (Exception e) {
+            // .env file not found, use environment variables or defaults
+        }
+
+        // Priority: .env file > environment variables > application.properties > defaults
+        if (dotenv != null) {
+            jiraEmail = dotenv.get("JIRA_EMAIL");
+            jiraApiToken = dotenv.get("JIRA_API_TOKEN");
+            String envBaseUrl = dotenv.get("JIRA_BASE_URL");
+            
+            if (envBaseUrl != null && !envBaseUrl.isEmpty()) {
+                jiraBaseUrl = envBaseUrl;
+            } else {
+                jiraBaseUrl = baseUrlProperty;
+            }
+        } else {
+            // Use environment variables or properties
+            jiraEmail = emailProperty;
+            jiraApiToken = tokenProperty;
+            jiraBaseUrl = baseUrlProperty;
+        }
+
+        // Fallback to system environment variables if .env values are null or empty
+        if (jiraEmail == null || jiraEmail.isEmpty()) {
+            jiraEmail = System.getenv("JIRA_EMAIL");
+        }
+        if (jiraApiToken == null || jiraApiToken.isEmpty()) {
+            jiraApiToken = System.getenv("JIRA_API_TOKEN");
+        }
+        if (jiraBaseUrl == null || jiraBaseUrl.isEmpty()) {
+            String envBaseUrl = System.getenv("JIRA_BASE_URL");
+            jiraBaseUrl = (envBaseUrl != null && !envBaseUrl.isEmpty()) ? envBaseUrl : baseUrlProperty;
+        }
+    }
+
     @Bean
     public WebClient jiraWebClient() {
+        if (jiraEmail == null || jiraEmail.isEmpty() || jiraApiToken == null || jiraApiToken.isEmpty()) {
+            throw new IllegalStateException(
+                    "JIRA_EMAIL and JIRA_API_TOKEN must be set in environment variables or .env file"
+            );
+        }
+
         return WebClient.builder()
-                .baseUrl("https://piyushjoshi280601.atlassian.net/")
+                .baseUrl(jiraBaseUrl)
                 .defaultHeaders(headers -> {
-                    headers.setBasicAuth(
-                            "${JIRA_EMAIL}",
-                            "${JIRA_API_TOKEN}"
-                    );
+                    headers.setBasicAuth(jiraEmail, jiraApiToken);
                     headers.add("Accept", "application/json");
                 })
                 .exchangeStrategies(
