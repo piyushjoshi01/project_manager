@@ -1,6 +1,7 @@
 import { useState, useEffect, JSX } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchMilestones, createMilestone, updateMilestone, deleteMilestone, fetchIssuesByProject } from "../api/jiraApi";
+import { fetchMilestones, createMilestone, updateMilestone, deleteMilestone } from "../api/milestoneApi";
+import { fetchIssuesByProject } from "../api/jiraApi";
 import { Milestone, MilestoneStatus } from "../types/milestone.types";
 import { ArrowLeft, Plus, Edit2, Trash2, Table, Calendar, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import Loader from "../components/common/Loader";
@@ -28,7 +29,11 @@ export default function Milestones() {
   }, [projectKey]);
 
   const loadMilestones = async () => {
-    if (!projectKey) return;
+    if (!projectKey) {
+      setError('Project key is required');
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const data = await fetchMilestones(projectKey);
@@ -119,9 +124,12 @@ export default function Milestones() {
   };
 
   const handleCreate = async () => {
-    if (!projectKey) return;
+    if (!projectKey) {
+      setError('Project key is required');
+      return;
+    }
     try {
-      await createMilestone(projectKey, formData);
+      await createMilestone({ ...formData, projectKey });
       setIsCreating(false);
       setFormData({ name: '', startDate: '', endDate: '', description: '' });
       loadMilestones();
@@ -131,9 +139,12 @@ export default function Milestones() {
   };
 
   const handleUpdate = async (id: string) => {
-    if (!projectKey) return;
+    if (!projectKey) {
+      setError('Project key is required');
+      return;
+    }
     try {
-      await updateMilestone(projectKey, id, formData);
+      await updateMilestone(id, { ...formData, projectKey });
       setEditingId(null);
       setFormData({ name: '', startDate: '', endDate: '', description: '' });
       loadMilestones();
@@ -143,9 +154,9 @@ export default function Milestones() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!projectKey || !confirm('Are you sure you want to delete this milestone?')) return;
+    if (!confirm('Are you sure you want to delete this milestone?')) return;
     try {
-      await deleteMilestone(projectKey, id);
+      await deleteMilestone(id);
       loadMilestones();
     } catch (err: any) {
       setError(err.message || 'Failed to delete milestone');
@@ -153,7 +164,7 @@ export default function Milestones() {
   };
 
   const startEdit = (milestone: Milestone) => {
-    setEditingId(milestone.id || '');
+    setEditingId(milestone.id ? String(milestone.id) : null);
     setFormData({
       name: milestone.name,
       startDate: milestone.startDate,
@@ -212,12 +223,19 @@ export default function Milestones() {
           </button>
 
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                Milestones
-              </h1>
-              <p className="text-lg text-gray-600 font-medium">Project: {projectKey}</p>
-            </div>
+              <div>
+                <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                  Project Milestones
+                </h1>
+                <p className="text-lg text-gray-600 font-medium">
+                  Managing milestones for: <span className="font-bold text-indigo-700">{projectKey}</span>
+                </p>
+                {milestones.length > 0 && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    {milestones.length} milestone{milestones.length !== 1 ? 's' : ''} defined for this project
+                  </p>
+                )}
+              </div>
 
             <div className="flex items-center space-x-4">
               {/* View Toggle */}
@@ -262,7 +280,21 @@ export default function Milestones() {
         {/* Create/Edit Form */}
         {(isCreating || editingId) && (
           <div className="mb-6 bg-white rounded-xl p-6 shadow-lg border-2 border-indigo-200">
-            <h3 className="text-xl font-bold mb-4">{editingId ? 'Edit' : 'Create'} Milestone</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">{editingId ? 'Edit' : 'Create'} Milestone</h3>
+              {projectKey && (
+                <span className="px-3 py-1 rounded-lg bg-indigo-100 text-indigo-700 text-sm font-semibold">
+                  Project: {projectKey}
+                </span>
+              )}
+            </div>
+            {!projectKey && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
+                <p className="text-sm text-red-700">
+                  Project key is required to create milestones. Please navigate to a project first.
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="milestone-name" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -364,7 +396,7 @@ export default function Milestones() {
                         key={milestone.id || index}
                         milestone={milestone}
                         onEdit={() => startEdit(milestone)}
-                        onDelete={() => handleDelete(milestone.id || '')}
+                        onDelete={() => handleDelete(milestone.id ? String(milestone.id) : '')}
                         calculateStatus={calculateStatus}
                         getStatusColor={getStatusColor}
                         getStatusIcon={getStatusIcon}
@@ -479,7 +511,8 @@ function TimelineView({
       const statusMap = new Map();
       for (const milestone of milestones) {
         const status = await calculateStatus(milestone);
-        statusMap.set(milestone.id || milestone.name, status);
+        const key = milestone.id ? String(milestone.id) : milestone.name;
+        statusMap.set(key, status);
       }
       setStatuses(statusMap);
     };
@@ -510,7 +543,8 @@ function TimelineView({
       <h3 className="text-xl font-bold mb-6">Project Timeline</h3>
       <div className="space-y-6">
         {milestones.map((milestone, index) => {
-          const status = statuses.get(milestone.id || milestone.name);
+          const key = milestone.id ? String(milestone.id) : milestone.name;
+          const status = statuses.get(key);
           const startDate = new Date(milestone.startDate);
           const endDate = new Date(milestone.endDate);
           const left = ((startDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;

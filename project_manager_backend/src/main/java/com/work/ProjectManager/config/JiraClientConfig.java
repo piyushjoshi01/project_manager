@@ -68,6 +68,11 @@ public class JiraClientConfig {
     }
 
     @Bean
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+
+    @Bean
     public WebClient jiraWebClient() {
         if (jiraEmail == null || jiraEmail.isEmpty() || jiraApiToken == null || jiraApiToken.isEmpty()) {
             throw new IllegalStateException(

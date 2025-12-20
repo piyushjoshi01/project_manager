@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, FolderKanban, Sparkles, LayoutDashboard, BarChart3, Settings, Bell, Search } from "lucide-react";
+import { Home, FolderKanban, Sparkles, LayoutDashboard, BarChart3, Settings, Bell, Search, Bot } from "lucide-react";
 
 export default function Navbar() {
   const location = useLocation();
@@ -13,9 +13,9 @@ export default function Navbar() {
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: Home },
-    { path: "/projects", label: "Projects", icon: FolderKanban },
+    // { path: "/projects", label: "Projects", icon: FolderKanban },
+    { path: "/genai", label: "GenAI", icon: Bot },
     { path: "/analytics", label: "Analytics", icon: BarChart3 },
-    { path: "/settings", label: "Settings", icon: Settings },
   ];
 
   return (
@@ -51,11 +51,11 @@ export default function Navbar() {
             </div>
             <div>
               <h1 className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Project Manager
+                Project Manager Pro
               </h1>
-              <p className="text-xs font-medium text-gray-500 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                Jira Integration
+              <p className="text-xs font-semibold text-gray-600 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-purple-500" />
+                AI-Powered Project Intelligence
               </p>
             </div>
           </Link>

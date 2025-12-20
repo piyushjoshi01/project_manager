@@ -28,5 +28,8 @@ public class Milestone {
 
     @Column(length = 1000)
     private String description;
+
+    @Column(name = "project_key", nullable = false)
+    private String projectKey;
 }
 

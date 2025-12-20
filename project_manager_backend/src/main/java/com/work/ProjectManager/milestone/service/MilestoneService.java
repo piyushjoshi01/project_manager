@@ -19,11 +19,16 @@ public class MilestoneService {
 
     @Transactional
     public MilestoneDTO createMilestone(MilestoneRequestDTO requestDTO) {
+        if (requestDTO.getProjectKey() == null || requestDTO.getProjectKey().trim().isEmpty()) {
+            throw new IllegalArgumentException("Project key is required");
+        }
+        
         Milestone milestone = new Milestone();
         milestone.setName(requestDTO.getName());
         milestone.setStartDate(requestDTO.getStartDate());
         milestone.setEndDate(requestDTO.getEndDate());
         milestone.setDescription(requestDTO.getDescription());
+        milestone.setProjectKey(requestDTO.getProjectKey());
         
         Milestone saved = milestoneRepository.save(milestone);
         return convertToDTO(saved);
@@ -33,11 +38,15 @@ public class MilestoneService {
     public List<MilestoneDTO> createMilestones(List<MilestoneRequestDTO> requestDTOs) {
         List<Milestone> milestones = requestDTOs.stream()
                 .map(dto -> {
+                    if (dto.getProjectKey() == null || dto.getProjectKey().trim().isEmpty()) {
+                        throw new IllegalArgumentException("Project key is required for all milestones");
+                    }
                     Milestone milestone = new Milestone();
                     milestone.setName(dto.getName());
                     milestone.setStartDate(dto.getStartDate());
                     milestone.setEndDate(dto.getEndDate());
                     milestone.setDescription(dto.getDescription());
+                    milestone.setProjectKey(dto.getProjectKey());
                     return milestone;
                 })
                 .collect(Collectors.toList());
@@ -50,6 +59,16 @@ public class MilestoneService {
 
     public List<MilestoneDTO> getAllMilestones() {
         return milestoneRepository.findAllByOrderByStartDateAsc()
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<MilestoneDTO> getMilestonesByProject(String projectKey) {
+        if (projectKey == null || projectKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("Project key is required");
+        }
+        return milestoneRepository.findByProjectKeyOrderByStartDateAsc(projectKey)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -88,13 +107,22 @@ public class MilestoneService {
         milestoneRepository.deleteAll();
     }
 
+    @Transactional
+    public void deleteMilestonesByProject(String projectKey) {
+        if (projectKey == null || projectKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("Project key is required");
+        }
+        milestoneRepository.deleteByProjectKey(projectKey);
+    }
+
     private MilestoneDTO convertToDTO(Milestone milestone) {
         return new MilestoneDTO(
                 milestone.getId(),
                 milestone.getName(),
                 milestone.getStartDate(),
                 milestone.getEndDate(),
-                milestone.getDescription()
+                milestone.getDescription(),
+                milestone.getProjectKey()
         );
     }
 }

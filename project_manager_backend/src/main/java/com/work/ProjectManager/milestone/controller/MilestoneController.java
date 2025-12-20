@@ -43,9 +43,26 @@ public class MilestoneController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAllMilestones() {
+    public ResponseEntity<ApiResponse> getAllMilestones(
+            @RequestParam(required = false) String projectKey) {
         try {
-            List<MilestoneDTO> milestones = milestoneService.getAllMilestones();
+            List<MilestoneDTO> milestones;
+            if (projectKey != null && !projectKey.trim().isEmpty()) {
+                milestones = milestoneService.getMilestonesByProject(projectKey);
+            } else {
+                milestones = milestoneService.getAllMilestones();
+            }
+            return ResponseEntity.ok(new ApiResponse(true, milestones, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, null, e.getMessage()));
+        }
+    }
+
+    @GetMapping("/project/{projectKey}")
+    public ResponseEntity<ApiResponse> getMilestonesByProject(@PathVariable String projectKey) {
+        try {
+            List<MilestoneDTO> milestones = milestoneService.getMilestonesByProject(projectKey);
             return ResponseEntity.ok(new ApiResponse(true, milestones, null));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -102,6 +119,17 @@ public class MilestoneController {
         try {
             milestoneService.deleteAllMilestones();
             return ResponseEntity.ok(new ApiResponse(true, "All milestones deleted successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, null, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/project/{projectKey}")
+    public ResponseEntity<ApiResponse> deleteMilestonesByProject(@PathVariable String projectKey) {
+        try {
+            milestoneService.deleteMilestonesByProject(projectKey);
+            return ResponseEntity.ok(new ApiResponse(true, "All milestones for project deleted successfully", null));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, null, e.getMessage()));

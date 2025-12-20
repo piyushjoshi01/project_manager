@@ -1,4 +1,5 @@
 HELP.md
+LLM_SERVER_SETUP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

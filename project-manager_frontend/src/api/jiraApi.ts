@@ -1,52 +1,54 @@
 import { JiraIssue, JiraProject } from "types/jira.types";
 import { api } from "./axios.config";
 
+/**
+ * Jira Projects API
+ */
 
+/**
+ * Get all Jira projects
+ * @returns Array of Jira projects
+ */
 export const fetchProjects = async (): Promise<JiraProject[]> => {
-const res = await api.get("/jira/projects");
-console.log(res.data.data);
-return res.data.data;
+  const res = await api.get("/jira/projects");
+  return res.data.data;
 };
 
+/**
+ * Get project details by project ID or key
+ * @param projectIdOrKey - Project ID or key
+ * @returns Project details or null if not found
+ */
+export const fetchProjectByKey = async (projectIdOrKey: string): Promise<JiraProject | null> => {
+  try {
+    const res = await api.get(`/jira/projects/${projectIdOrKey}`);
+    return res.data.data;
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    return null;
+  }
+};
 
+/**
+ * Jira Issues API
+ */
+
+/**
+ * Get all issues for a specific project
+ * @param projectKey - Project key
+ * @returns Array of Jira issues
+ */
 export const fetchIssuesByProject = async (projectKey: string): Promise<JiraIssue[]> => {
-const res = await api.get(`/jira/issues/project/${projectKey}`);
-return res.data.data;
-};
-
-export const fetchProjectByKey = async (projectKey: string): Promise<JiraProject | null> => {
-try {
-  const res = await api.get(`/jira/projects/${projectKey}`);
-  return res.data.data;
-} catch (error) {
-  console.error("Error fetching project:", error);
-  return null;
-}
-};
-
-// Milestones API - matches backend controller at /api/milestones
-export const fetchMilestones = async (projectKey?: string) => {
-  const res = await api.get(`/milestones`);
-  const milestones = res.data.data || [];
-  // If projectKey is provided, filter milestones (assuming backend might add projectKey later)
-  // For now, return all milestones as backend doesn't have projectKey filtering
-  return milestones;
-};
-
-export const createMilestone = async (projectKey: string, milestone: any) => {
-  // Backend /bulk endpoint expects an array of MilestoneRequestDTO
-  const res = await api.post(`/milestones/bulk`, [milestone]);
+  const res = await api.get(`/jira/issues/project/${projectKey}`);
   return res.data.data;
 };
 
-export const updateMilestone = async (projectKey: string, milestoneId: string, milestone: any) => {
-  // Backend PUT /{id} expects a single MilestoneRequestDTO (not an array)
-  const res = await api.put(`/milestones/${milestoneId}`, milestone);
+/**
+ * Get all issues assigned to a specific user
+ * @param accountId - User's Jira account ID
+ * @returns Array of Jira issues assigned to the user
+ */
+export const fetchIssuesAssignedToUser = async (accountId: string): Promise<JiraIssue[]> => {
+  const res = await api.get(`/jira/issues/assigned/${accountId}`);
   return res.data.data;
-};
-
-export const deleteMilestone = async (projectKey: string, milestoneId: string) => {
-  // Backend DELETE /{id} expects just the id in path
-  const res = await api.delete(`/milestones/${milestoneId}`);
-  return res.data;
 };

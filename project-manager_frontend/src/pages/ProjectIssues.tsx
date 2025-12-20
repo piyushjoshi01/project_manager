@@ -5,7 +5,7 @@ import { fetchIssuesByProject, fetchProjectByKey } from "../api/jiraApi";
 import { JiraProject } from "../types/jira.types";
 import Loader from "../components/common/Loader";
 import Error from "../components/common/Error";
-import { ArrowLeft, Bug, CheckCircle2, Clock, AlertCircle, FolderKanban, User, Calendar, Grid3x3, List } from "lucide-react";
+import { ArrowLeft, Bug, CheckCircle2, Clock, AlertCircle, FolderKanban, User, Calendar, Grid3x3, List, Bot } from "lucide-react";
 
 export default function ProjectIssues() {
   const { projectKey } = useParams<{ projectKey: string }>();
@@ -110,13 +110,22 @@ export default function ProjectIssues() {
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               <span className="font-semibold">Back to Projects</span>
             </button>
-            <button
-              onClick={() => navigate(`/project/${projectKey}/milestones`)}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all"
-            >
-              <Calendar className="w-5 h-5" />
-              <span>View Milestones</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => navigate(`/project/${projectKey}/genai`)}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all"
+              >
+                <Bot className="w-5 h-5" />
+                <span>GenAI Assistant</span>
+              </button>
+              <button
+                onClick={() => navigate(`/project/${projectKey}/milestones`)}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all"
+              >
+                <Calendar className="w-5 h-5" />
+                <span>View Milestones</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center space-x-4 mb-6">

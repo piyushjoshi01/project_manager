@@ -14,5 +14,6 @@ public class MilestoneRequestDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private String description;
+    private String projectKey;
 }
 

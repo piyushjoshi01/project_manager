@@ -46,7 +46,7 @@ public class JiraService {
         queryParams.put("jql", jql);
         queryParams.put("maxResults", "100");
         queryParams.put("startAt", "0");
-        queryParams.put("fields", "summary,status,assignee,id,key");
+        queryParams.put("fields", "summary,description,status,assignee,id,key,created,resolutiondate,project");
         return jiraRestClient.getWithQueryParams(endpoint, queryParams, JiraSearchResponse.class);
     }
 
@@ -65,7 +65,7 @@ public class JiraService {
         queryParams.put("jql", jql);
         queryParams.put("maxResults", "100");
         queryParams.put("startAt", "0");
-        queryParams.put("fields", "summary,status,assignee,id,key");
+        queryParams.put("fields", "summary,description,status,assignee,id,key,created,resolutiondate,project");
         return jiraRestClient.getWithQueryParams(endpoint, queryParams, JiraSearchResponse.class)
                 .map(resp -> resp.getIssues() != null ? resp.getIssues() : new JiraIssueDTO[0]);
     }

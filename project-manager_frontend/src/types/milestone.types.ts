@@ -1,10 +1,10 @@
 export interface Milestone {
-  id?: string;
+  id?: number | string; // Backend returns Long (number), but keeping flexible for string IDs
   name: string;
-  startDate: string;
-  endDate: string;
+  startDate: string; // ISO date string (YYYY-MM-DD)
+  endDate: string; // ISO date string (YYYY-MM-DD)
   description: string;
-  status?: 'on-track' | 'at-risk' | 'delayed';
+  status?: 'on-track' | 'at-risk' | 'delayed'; // Calculated on frontend, not from backend
 }
 
 export interface MilestoneStatus {

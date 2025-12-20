@@ -9,5 +9,7 @@ import java.util.List;
 @Repository
 public interface MilestoneRepository extends JpaRepository<Milestone, Long> {
     List<Milestone> findAllByOrderByStartDateAsc();
+    List<Milestone> findByProjectKeyOrderByStartDateAsc(String projectKey);
+    void deleteByProjectKey(String projectKey);
 }
 
