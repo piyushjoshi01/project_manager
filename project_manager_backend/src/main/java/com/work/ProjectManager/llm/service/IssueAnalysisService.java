@@ -27,22 +27,34 @@ public class IssueAnalysisService {
     /**
      * Sync issues from Jira for a project and store analysis data
      */
-    @Transactional
     public Mono<Void> syncIssuesForProject(String projectKey) {
         return jiraService.getIssuesByProject(projectKey)
-                .doOnNext(issues -> {
-                    for (JiraIssueDTO issue : issues) {
-                        saveOrUpdateIssueAnalysis(issue);
-                    }
-                })
-                .then(Mono.fromRunnable(() -> {
+                .flatMap(issues -> Mono.fromCallable(() -> {
+                    // Execute blocking database operations in a transaction
+                    saveIssuesBatch(issues);
+                    return null;
+                }))
+                .then(Mono.fromCallable(() -> {
                     // Recalculate assignee performance after syncing
                     recalculateAssigneePerformance();
-                }));
+                    return null;
+                }))
+                .then();
+    }
+
+    /**
+     * Save a batch of issues in a single transaction
+     */
+    @Transactional
+    private void saveIssuesBatch(JiraIssueDTO[] issues) {
+        for (JiraIssueDTO issue : issues) {
+            saveOrUpdateIssueAnalysis(issue);
+        }
     }
 
     /**
      * Save or update issue analysis from Jira issue data
+     * Must be called within a transaction context
      */
     private void saveOrUpdateIssueAnalysis(JiraIssueDTO jiraIssue) {
         if (jiraIssue.getKey() == null || jiraIssue.getFields() == null) {
@@ -53,9 +65,14 @@ public class IssueAnalysisService {
                 .orElse(new IssueAnalysis());
         
         analysis.setIssueKey(jiraIssue.getKey());
-        analysis.setProjectKey(jiraIssue.getFields().getProject() != null 
+        
+        // Project key is required - extract from issue key if project is null
+        String projectKey = jiraIssue.getFields().getProject() != null 
                 ? jiraIssue.getFields().getProject().getKey() 
-                : null);
+                : (jiraIssue.getKey() != null && jiraIssue.getKey().contains("-") 
+                        ? jiraIssue.getKey().substring(0, jiraIssue.getKey().indexOf("-")) 
+                        : "UNKNOWN");
+        analysis.setProjectKey(projectKey);
         analysis.setSummary(jiraIssue.getFields().getSummary());
         analysis.setDescription(jiraIssue.getFields().getDescription());
         analysis.setStatus(jiraIssue.getFields().getStatus() != null 
@@ -79,15 +96,20 @@ public class IssueAnalysisService {
             analysis.setTimeTakenHours(duration.toHours() + (duration.toMinutes() % 60) / 60.0);
         }
         
-        // Get assignee hourly cost from performance table
+        // Get assignee hourly cost from performance table or set default
         if (analysis.getAssigneeAccountId() != null) {
             Optional<AssigneePerformance> assigneePerf = assigneePerformanceRepository
                     .findById(analysis.getAssigneeAccountId());
             if (assigneePerf.isPresent() && assigneePerf.get().getHourlyCost() != null) {
                 analysis.setAssigneeHourlyCost(assigneePerf.get().getHourlyCost());
-                if (analysis.getTimeTakenHours() != null) {
-                    analysis.setTotalCost(analysis.getAssigneeHourlyCost() * analysis.getTimeTakenHours());
-                }
+            } else {
+                // Set default hourly cost if not found
+                analysis.setAssigneeHourlyCost(50.0);
+            }
+            
+            // Calculate total cost if time is available
+            if (analysis.getTimeTakenHours() != null && analysis.getAssigneeHourlyCost() != null) {
+                analysis.setTotalCost(analysis.getAssigneeHourlyCost() * analysis.getTimeTakenHours());
             }
         }
         

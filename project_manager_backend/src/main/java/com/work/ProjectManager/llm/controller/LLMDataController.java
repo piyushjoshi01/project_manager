@@ -7,6 +7,9 @@ import com.work.ProjectManager.llm.entity.IssueAnalysis;
 import com.work.ProjectManager.llm.service.IssueAnalysisService;
 import com.work.ProjectManager.llm.service.LLMService;
 import com.work.ProjectManager.utils.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,25 +21,30 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/llm")
 @RequiredArgsConstructor
+@Tag(name = "LLM & Analytics", description = "APIs for issue analysis, performance metrics, and LLM-powered insights")
 public class LLMDataController {
 
     private final IssueAnalysisService issueAnalysisService;
     private final LLMService llmService;
 
-    /**
-     * Sync issues from Jira for a project
-     */
+    @Operation(
+            summary = "Sync Jira issues",
+            description = "Syncs all issues from a Jira project and analyzes them for performance metrics"
+    )
     @PostMapping("/sync/project/{projectKey}")
-    public Mono<ResponseEntity<ApiResponse>> syncProject(@PathVariable String projectKey) {
+    public Mono<ResponseEntity<ApiResponse>> syncProject(
+            @Parameter(description = "Project key", example = "MW")
+            @PathVariable String projectKey) {
         return issueAnalysisService.syncIssuesForProject(projectKey)
                 .then(Mono.just(ResponseEntity.ok(new ApiResponse(true, "Issues synced successfully", null))))
                 .onErrorResume(e -> Mono.just(ResponseEntity.badRequest()
                         .body(new ApiResponse(false, null, e.getMessage()))));
     }
 
-    /**
-     * Get all data formatted for LLM consumption
-     */
+    @Operation(
+            summary = "Get all LLM data",
+            description = "Retrieves all issue analysis and assignee performance data"
+    )
     @GetMapping("/data")
     public ResponseEntity<ApiResponse> getAllLLMData() {
         List<IssueAnalysis> issues = issueAnalysisService.getAllIssueAnalysis();
@@ -50,11 +58,14 @@ public class LLMDataController {
         return ResponseEntity.ok(new ApiResponse(true, dto, null));
     }
 
-    /**
-     * Get data for a specific project
-     */
+    @Operation(
+            summary = "Get project LLM data",
+            description = "Retrieves issue analysis and performance data for a specific project"
+    )
     @GetMapping("/data/project/{projectKey}")
-    public ResponseEntity<ApiResponse> getProjectLLMData(@PathVariable String projectKey) {
+    public ResponseEntity<ApiResponse> getProjectLLMData(
+            @Parameter(description = "Project key", example = "MW")
+            @PathVariable String projectKey) {
         List<IssueAnalysis> issues = issueAnalysisService.getIssueAnalysisByProject(projectKey);
         List<AssigneePerformance> assignees = issueAnalysisService.getAllAssigneePerformance();
 
@@ -66,12 +77,15 @@ public class LLMDataController {
         return ResponseEntity.ok(new ApiResponse(true, dto, null));
     }
 
-    /**
-     * Update assignee hourly cost
-     */
+    @Operation(
+            summary = "Update assignee hourly cost",
+            description = "Updates the hourly cost for an assignee and recalculates all related costs"
+    )
     @PutMapping("/assignee/{accountId}/cost")
     public ResponseEntity<ApiResponse> updateAssigneeCost(
+            @Parameter(description = "Jira account ID")
             @PathVariable String accountId,
+            @Parameter(description = "Hourly cost in dollars", example = "75.50")
             @RequestParam Double hourlyCost) {
         try {
             issueAnalysisService.updateAssigneeHourlyCost(accountId, hourlyCost);
@@ -82,9 +96,10 @@ public class LLMDataController {
         }
     }
 
-    /**
-     * Recalculate all performance metrics
-     */
+    @Operation(
+            summary = "Recalculate performance metrics",
+            description = "Recalculates all assignee performance metrics based on current data"
+    )
     @PostMapping("/recalculate")
     public ResponseEntity<ApiResponse> recalculatePerformance() {
         try {
@@ -96,11 +111,16 @@ public class LLMDataController {
         }
     }
 
-    /**
-     * Ask a question to the LLM about project data
-     */
+    @Operation(
+            summary = "Ask LLM a question",
+            description = "Ask natural language questions about project data and get AI-powered insights"
+    )
     @PostMapping("/ask")
-    public Mono<ResponseEntity<ApiResponse>> askLLM(@RequestBody LLMQueryRequest request) {
+    public Mono<ResponseEntity<ApiResponse>> askLLM(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Question and optional project key for context"
+            )
+            @RequestBody LLMQueryRequest request) {
         // Get relevant data based on projectKey
         LLMDataDTO data;
         if (request.getProjectKey() != null && !request.getProjectKey().isEmpty()) {

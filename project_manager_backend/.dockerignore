@@ -1,0 +1,14 @@
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.git/
+.gitignore
+*.log
+HELP.md
+LLM_SERVER_SETUP.md
+

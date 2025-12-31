@@ -74,10 +74,20 @@ public class JiraClientConfig {
 
     @Bean
     public WebClient jiraWebClient() {
+        // Allow app to start without Jira credentials (for tests and development)
         if (jiraEmail == null || jiraEmail.isEmpty() || jiraApiToken == null || jiraApiToken.isEmpty()) {
-            throw new IllegalStateException(
-                    "JIRA_EMAIL and JIRA_API_TOKEN must be set in environment variables or .env file"
-            );
+            System.out.println("WARNING: JIRA_EMAIL and JIRA_API_TOKEN not configured. Jira integration will not work.");
+            return WebClient.builder()
+                    .baseUrl(jiraBaseUrl != null && !jiraBaseUrl.isEmpty() ? jiraBaseUrl : "https://example.com")
+                    .defaultHeaders(headers -> {
+                        headers.add("Accept", "application/json");
+                    })
+                    .exchangeStrategies(
+                            ExchangeStrategies.builder()
+                                    .codecs(c -> c.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                                    .build()
+                    )
+                    .build();
         }
 
         return WebClient.builder()
