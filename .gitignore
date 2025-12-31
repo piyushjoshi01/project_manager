@@ -1,1 +1,24 @@
 .env
+
+# TypeScript compiled output in src directory
+project-manager_frontend/src/**/*.js
+project-manager_frontend/src/**/*.js.map
+!project-manager_frontend/src/vite-env.d.ts
+
+# Node modules
+node_modules/
+project-manager_frontend/node_modules/
+project_manager_backend/node_modules/
+
+# Build outputs
+project-manager_frontend/dist/
+project_manager_backend/target/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

@@ -69,47 +69,47 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:buildcache,mode=max
 
-      # # Deploy backend
-      # - name: Deploy backend
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.BACKEND_HOST }}
-      #     username: ${{ secrets.BACKEND_USERNAME }}
-      #     key: ${{ secrets.BACKEND_SSH_KEY }}
-      #     script: |
-      #       echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      #       docker pull ${{ secrets.DOCKER_USERNAME }}/project-manager-backend:latest
-      #       docker stop project-manager-backend || true
-      #       docker rm project-manager-backend || true
-      #       docker run -d \
-      #         --name project-manager-backend \
-      #         --restart unless-stopped \
-      #         -p 8080:8080 \
-      #         -e SPRING_DATASOURCE_URL="${{ secrets.BACKEND_DB_URL }}" \
-      #         -e SPRING_DATASOURCE_USERNAME="${{ secrets.BACKEND_DB_USERNAME }}" \
-      #         -e SPRING_DATASOURCE_PASSWORD="${{ secrets.BACKEND_DB_PASSWORD }}" \
-      #         -e JIRA_BASE_URL="${{ secrets.JIRA_BASE_URL }}" \
-      #         -e JIRA_EMAIL="${{ secrets.JIRA_EMAIL }}" \
-      #         -e JIRA_API_TOKEN="${{ secrets.JIRA_API_TOKEN }}" \
-      #         -e LLM_SERVER_URL="${{ secrets.LLM_SERVER_URL }}" \
-      #         ${{ secrets.DOCKER_USERNAME }}/project-manager-backend:latest
-      #       docker image prune -f
+      # Deploy backend
+      - name: Deploy backend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.BACKEND_HOST }}
+          username: ${{ secrets.BACKEND_USERNAME }}
+          key: ${{ secrets.BACKEND_SSH_KEY }}
+          script: |
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            docker pull ${{ secrets.DOCKER_USERNAME }}/project-manager-backend:latest
+            docker stop project-manager-backend || true
+            docker rm project-manager-backend || true
+            docker run -d \
+              --name project-manager-backend \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL="${{ secrets.BACKEND_DB_URL }}" \
+              -e SPRING_DATASOURCE_USERNAME="${{ secrets.BACKEND_DB_USERNAME }}" \
+              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.BACKEND_DB_PASSWORD }}" \
+              -e JIRA_BASE_URL="${{ secrets.JIRA_BASE_URL }}" \
+              -e JIRA_EMAIL="${{ secrets.JIRA_EMAIL }}" \
+              -e JIRA_API_TOKEN="${{ secrets.JIRA_API_TOKEN }}" \
+              -e LLM_SERVER_URL="${{ secrets.LLM_SERVER_URL }}" \
+              ${{ secrets.DOCKER_USERNAME }}/project-manager-backend:latest
+            docker image prune -f
 
-      # # Deploy frontend
-      # - name: Deploy frontend
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.FRONTEND_HOST }}
-      #     username: ${{ secrets.FRONTEND_USERNAME }}
-      #     key: ${{ secrets.FRONTEND_SSH_KEY }}
-      #     script: |
-      #       echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      #       docker pull ${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:latest
-      #       docker stop project-manager-frontend || true
-      #       docker rm project-manager-frontend || true
-      #       docker run -d \
-      #         --name project-manager-frontend \
-      #         --restart unless-stopped \
-      #         -p 80:80 \
-      #         ${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:latest
-      #       docker image prune -f
+      # Deploy frontend
+      - name: Deploy frontend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FRONTEND_HOST }}
+          username: ${{ secrets.FRONTEND_USERNAME }}
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          script: |
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            docker pull ${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:latest
+            docker stop project-manager-frontend || true
+            docker rm project-manager-frontend || true
+            docker run -d \
+              --name project-manager-frontend \
+              --restart unless-stopped \
+              -p 80:80 \
+              ${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:latest
+            docker image prune -f
