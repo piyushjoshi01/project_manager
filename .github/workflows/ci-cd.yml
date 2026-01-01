@@ -108,6 +108,6 @@ jobs:
             docker run -d \
               --name project-manager-frontend \
               --restart unless-stopped \
-              -p 80:80 \
+              -p 3000:80 \
               ${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:latest
             docker image prune -f
