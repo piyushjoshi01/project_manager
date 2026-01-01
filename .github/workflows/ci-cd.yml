@@ -61,7 +61,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./project_manager_frontend
-          file: ./project_manager_frontend/Dockerfile
+          file: ./project_manager_frontend/Dockerfile.prod
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:latest
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/project-manager-frontend:buildcache
